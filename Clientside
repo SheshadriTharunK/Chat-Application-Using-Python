@@ -1,0 +1,38 @@
+import socket
+import threading
+
+# Server configuration
+HOST = 'localhost'
+PORT = 5555
+
+# Function to receive messages from server
+def receive_messages():
+    while True:
+        try:
+            # Receive message from server
+            message = client.recv(1024).decode('utf-8')
+            print(message)
+        except:
+            # If an error occurs, client is disconnected
+            print("Connection lost")
+            client.close()
+            break
+
+# Main function to start client
+def main():
+    # Create socket object
+    global client
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # Connect to server
+    client.connect((HOST, PORT))
+
+    # Start a thread to receive messages
+    threading.Thread(target=receive_messages).start()
+
+    # Send messages to server
+    while True:
+        message = input()
+        client.send(message.encode('utf-8'))
+
+if __name__ == "__main__":
+    main()
