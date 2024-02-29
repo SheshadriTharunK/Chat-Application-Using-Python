@@ -1,0 +1,66 @@
+import socket
+import threading
+
+# Server configuration
+HOST = 'localhost'
+PORT = 5555
+
+# List to store connected clients
+clients = []
+
+# Function to handle client connections
+def handle_client(client, addr):
+    while True:
+        try:
+            # Receive message from client
+            message = client.recv(1024).decode('utf-8')
+            if message:
+                print(f"[{addr[0]}:{addr[1]}] {message}")
+                # Broadcast message to all other clients
+                broadcast(message, client)
+            else:
+                # If no message received, client is disconnected
+                remove_client(client)
+        except:
+            # If an error occurs, remove client
+            remove_client(client)
+            break
+
+# Function to broadcast message to all clients
+def broadcast(message, sender):
+    for client in clients:
+        if client != sender:
+            try:
+                client.send(message.encode('utf-8'))
+            except:
+                # If sending fails, remove client
+                client.close()
+                remove_client(client)
+
+# Function to remove client from the list
+def remove_client(client):
+    if client in clients:
+        clients.remove(client)
+
+# Main function to start server
+def main():
+    # Create socket object
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # Bind the server to the specified address and port
+    server.bind((HOST, PORT))
+    # Listen for incoming connections
+    server.listen()
+
+    print(f"Server started on {HOST}:{PORT}")
+
+    while True:
+        # Accept incoming connection
+        client, addr = server.accept()
+        print(f"Connection established from {addr[0]}:{addr[1]}")
+        # Add client to the list
+        clients.append(client)
+        # Start a new thread to handle client communication
+        threading.Thread(target=handle_client, args=(client, addr)).start()
+
+if __name__ == "__main__":
+    main()
